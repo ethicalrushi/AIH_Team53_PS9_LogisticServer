@@ -33,7 +33,6 @@ parsimonious==0.8.1
 protobuf==3.14.0
 pycryptodome==3.9.9
 pylint==2.6.0
-pypiwin32==223
 pyrsistent==0.17.3
 pytz==2020.5
 requests==2.25.1
