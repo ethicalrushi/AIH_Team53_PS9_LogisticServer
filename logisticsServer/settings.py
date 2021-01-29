@@ -25,7 +25,7 @@ SECRET_KEY = 'fis=i2ss9=_*vzx_qjjjp6v5sh!*^9qp^j3idl&c0+(+el_d*q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['aseanlogistics.herokuapp.com',]
 
 AUTH_USER_MODEL = "user.User"
 
