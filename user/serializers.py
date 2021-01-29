@@ -6,7 +6,6 @@ from rest_framework.response import Response
 class UserSerializer(serializers.ModelSerializer):
     token = serializers.SerializerMethodField(source='get_token')
     def get_token(self, obj):
-        print(obj)
         tokenObj = Token.objects.get(user=obj)
         return tokenObj.key
 
@@ -24,7 +23,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         user.username = user.contact
         user.set_password(valid_data['password'])
-        # print(user.username, user.password)
         user.save()
         return user
 

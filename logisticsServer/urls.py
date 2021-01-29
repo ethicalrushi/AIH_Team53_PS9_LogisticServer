@@ -24,8 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('user/', include('user.urls')),
     path('transaction/', include('transaction.urls')),
-    path('auth/', include('rest_auth.urls')), #/login and /logout
+    # path('auth/', include('rest_auth.urls')), #/login and /logout
     path('getToken/', restViews.obtain_auth_token),
-    # path('transaction/', include('transaction.urls'))
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
