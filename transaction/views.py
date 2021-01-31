@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from .models import ShipmentAgency
+from .models import ShipmentAgency, ShipmentOrder
+from user.models import User
 from rest_framework import viewsets, permissions,generics
 from .serializers import ShipmentAgencySerializer
 from django.views.decorators.csrf import csrf_exempt
@@ -9,6 +10,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework import status
+import random
+import string
 
 class ShipmentAgencyListView(generics.ListCreateAPIView):
 
@@ -49,3 +52,43 @@ def dummyAPI(request):
     you can use other status codes too as required
 
     """
+
+@api_view(['post'])
+def dummy(request):
+    print(request.data)
+    dic = {"shipmentId":request.data["shipmentId"]}
+    return Response(dic, status=status.HTTP_200_OK)
+
+@api_view(['get'])
+def getShipmentId(request):
+    while True:
+        randomString = ''.join(random.choices(string.ascii_uppercase +
+                                string.digits, k = 6))
+        users = User.objects.all()
+        user = users[0]
+        try:
+            shipmentOrder = ShipmentOrder.objects.get(shipmentId=randomString)
+        except:
+            shipmentOrder = ShipmentOrder(shipmentId=randomString, shipper=user)
+            shipmentOrder.save()
+            return Response({"shipmentId":randomString}, status=status.HTTP_200_OK)
+        else:
+            pass
+
+@api_view(['get'])
+def getShipmentOrdersShipper(request):
+
+    user = User.objects.all()[0] #get from token
+    shipmentOrders = ShipmentOrder.objects.filter(shipper=user)
+
+    shipmentIds = [shipmentOrder.shipmentId for shipmentOrder in shipmentOrders]
+    #query this dic from contract for given shipmentIds
+    dic = {"shipFrom":"aBC",
+            "shipTo":"xyz",
+            "shipmentId":"1aenjd",
+            "shipmentAgency":"RMD LTD.",
+            "approved":False}
+
+    dataList = [dic, dic, dic, dic]
+
+    return Response(dataList, status=status.HTTP_200_OK)
