@@ -8,5 +8,13 @@ urlpatterns = [
     path('dummy/', views.dummy),
     path('getShipmentId/', views.getShipmentId),
     path('getShipmentOrdersShipper/', views.getShipmentOrdersShipper),
+    path('setShipFrom/', views.setShipFrom),
+    path('setShipTo/', views.setShipTo),
+    path('addCustomerOrder/', views.addCustomerOrder),
+    path('setShipmentAgency/', views.setShipmentAgency),
+
+    #############ShipmentAgencyAPI###############
+    path('setCarrier/', views.setCarrier),
+    path('setCarrierInformation/', views.setCarrierInformation),
     
 ]

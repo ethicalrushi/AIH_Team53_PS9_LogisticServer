@@ -3,6 +3,7 @@ from user.models import User
 
 class ShipmentAgency(models.Model):
     name = models.CharField(max_length=200)
+    publicAddress = models.CharField(max_length=200, null=True, blank=True)
     cost = models.IntegerField()
     representative = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -11,7 +12,7 @@ class ShipmentAgency(models.Model):
 
 class ShipmentOrder(models.Model):
     shipmentId = models.CharField(max_length=6)
-    shipper = models.ForeignKey(User, on_delete=models.CASCADE)
+    shipper = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
     ShipmentAgency = models.ForeignKey(ShipmentAgency, blank=True, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
