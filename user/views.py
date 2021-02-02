@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated 
+from transaction.views import web3Setup, getAccountBalance
 
 class UserListView(generics.ListCreateAPIView):
 
@@ -19,3 +20,10 @@ class UserListView(generics.ListCreateAPIView):
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+@api_view(['get'])
+def getUserDetails(request):
+    user = request.user
+    print(user)
+    return Response({"name":user.name, "role":user.role})

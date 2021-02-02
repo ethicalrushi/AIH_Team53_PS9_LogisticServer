@@ -14,7 +14,7 @@ class ShipmentOrder(models.Model):
     shipmentId = models.CharField(max_length=6)
     shipper = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
     ShipmentAgency = models.ForeignKey(ShipmentAgency, blank=True, null=True, on_delete=models.CASCADE)
-
+    receiver = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE, related_name='recievers')
     def __str__(self):
         return self.shipmentId
 

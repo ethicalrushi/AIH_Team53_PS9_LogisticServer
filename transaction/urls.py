@@ -2,7 +2,7 @@ from django.urls import include, path
 from . import views
 
 urlpatterns = [
-    path('getShipmentAgency/', views.ShipmentAgencyListView.as_view()),
+    path('getShipmentAgency/', views.getShipmentAgency),
     path('getShipmentAgency/<int:pk>/', views.ShipmentAgencyDetailView.as_view()),  
     path('dummyAPI/', views.dummyAPI),
     path('dummy/', views.dummy),
@@ -13,8 +13,15 @@ urlpatterns = [
     path('addCustomerOrder/', views.addCustomerOrder),
     path('setShipmentAgency/', views.setShipmentAgency),
 
+    path('scanQRCode/<str:shipmentId>/', views.scanQRCode),
+    path('blockPayment/', views.blockReceiverPayment),
+    path('getScores/', views.getScores),
+    path('finalPayment/', views.finalPayment),
+
     #############ShipmentAgencyAPI###############
     path('setCarrier/', views.setCarrier),
     path('setCarrierInformation/', views.setCarrierInformation),
+    path('setTrackingInformation/', views.setTrackingInformation),
+    path('getTrackingInformation/<str:shipmentId>/', views.getTrackingInformation),
     
 ]
