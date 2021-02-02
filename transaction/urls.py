@@ -16,5 +16,6 @@ urlpatterns = [
     #############ShipmentAgencyAPI###############
     path('setCarrier/', views.setCarrier),
     path('setCarrierInformation/', views.setCarrierInformation),
+    path('html_bol/',views.html_bol,name='html_bol')
     
 ]
