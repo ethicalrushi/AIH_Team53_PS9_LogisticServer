@@ -112,6 +112,7 @@ def getShipmentId(request):
 "zip":"421605"
 }
 """
+
 @api_view(['post'])
 def setShipFrom(request):
     date = datetime.datetime.now()
@@ -129,7 +130,7 @@ def setShipFrom(request):
     zipcode = request.user.zipcode
         
     contract, web3 = web3Setup()
-    userAddress = web3.toChecksumAddress('0xD1e684503F184464252A7759e817a6333B5F68a9')
+    userAddress = web3.toChecksumAddress('0x57402D6d32821EB898E20848FDcB91273f4774Bb')
 
     tx_hash = contract.functions.setDate(shipmentId,date).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
@@ -140,6 +141,33 @@ def setShipFrom(request):
     tx_hash = contract.functions.setShipFrom(shipmentId, name, address, city, state, int(zipcode), int(bolNo), False, 1, userAddress).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getDate(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getDate(shipmentId).call()
+    dic={}
+    dic['Date']=data
+    return dic
+
+def _getBOL_No(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getBOL_No(shipmentId).call()
+    dic={}
+    dic['BOL_No']=data
+    return dic
+
+def _getShipFrom(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getShipFrom(shipmentId).call()
+    dic={}
+    dic['Name']=data[0]
+    dic['Address']=data[1]
+    dic['City']=data[2]
+    dic['State']=data[3]
+    dic['Zip']=data[4]
+    dic['Sid']=data[5]
+    dic['FOB']=data[6]
+    return dic
 
 """
 {"shipmentId":"r23A",
@@ -170,11 +198,24 @@ def setShipTo(request):
     shipmentOrder.save()
 
     contract, web3 = web3Setup()
-    userAddress = web3.toChecksumAddress('0xD1e684503F184464252A7759e817a6333B5F68a9')
+    userAddress = web3.toChecksumAddress('0x57402D6d32821EB898E20848FDcB91273f4774Bb')
 
     tx_hash = contract.functions.setShipTo(shipmentId, name, address, city, state, int(zipcode), int(bolNo), False, 1, userAddress).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getShipTo(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getShipTo(shipmentId).call()
+    dic={}
+    dic['Name']=data[0]
+    dic['Address']=data[1]
+    dic['City']=data[2]
+    dic['State']=data[3]
+    dic['Zip']=data[4]
+    dic['Location']=data[5]
+    dic['FOB']=data[6]
+    return dic
 
 """
 {"shipmentId":"r23A",
@@ -200,6 +241,19 @@ def addCustomerOrder(request):
     tx_hash = contract.functions.setOrderInformation(shipmentId, customerOrderNumber, numberOfPackages, weight, 0, remarks, int(cost) ).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getCustomerOrder(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getOrderInformation(shipmentId).call()
+    return list(data)
+
+def _getGrandTotal(shipmentId):
+    contract,web3=web3Setup()
+    data=contract.functions.getGrandTotal(shipmentId).call()
+    dic={}
+    dic['Weight']=data[0]
+    dic['PKGS']=data[1]
+    return dic
 
 """
 {
@@ -275,6 +329,17 @@ def setCarrier(request):
     tx_hash = contract.functions.setCarrier(shipmentId, carrierName, trailerNumber, sealNumber, scad, proNumber).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getCarrier(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getCarrier(shipmentId).call()
+    dic={}
+    dic['CarrierName']=data[0]
+    dic['TrailerNumber']=data[1]
+    dic['SealNumber']=data[2]
+    dic['SCAD']=data[3]
+    dic['ProNumber']=data[4]
+    return dic
 
 """
 {
@@ -493,6 +558,39 @@ def finalPayment(request):
     #set delivered
 
     return Response({"true":True})
+def _getCarrierInformation(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getCarrierInformation(shipmentId).call()
+    return list(data)
+
+def html_bol(request):
+    shipmentId="r23A"
+    getDate=_getDate(shipmentId)
+    getBOL_No=_getBOL_No(shipmentId)
+    getShipFrom=_getShipFrom(shipmentId)
+    getShipTo=_getShipTo(shipmentId)
+    getOrderInformation=_getCustomerOrder(shipmentId)
+    getCarrier=_getCarrier(shipmentId)
+    getGrandTotal=_getGrandTotal(shipmentId)
+    getCarrierInformation=_getCarrierInformation(shipmentId)
+    orderinfo={}
+    for i,j in enumerate(getOrderInformation):
+        orderinfo[i]=j
+    carrierinfo={}
+    for i,j in enumerate(getCarrierInformation):
+        carrierinfo[i]=j
+    response={
+        'shipmentId':shipmentId,
+        'getDate':getDate,
+        'getShipFrom':getShipFrom,
+        'getBOL_No':getBOL_No,
+        'getshipTo':getShipTo,
+        'getCarrier':getCarrier,
+        'OrderInformation':orderinfo,
+        'getGrandTotal':getGrandTotal,
+        'CarrierInformation':carrierinfo
+    }
+    return render(request,'bol.html',response)
 
 
 
