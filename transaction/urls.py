@@ -23,6 +23,6 @@ urlpatterns = [
     path('setCarrierInformation/', views.setCarrierInformation),
     path('setTrackingInformation/', views.setTrackingInformation),
     path('getTrackingInformation/<str:shipmentId>/', views.getTrackingInformation),
-    path('html_bol/',views.html_bol,name='html_bol')
+    path('html_bol/<str:shipmentId>/',views.html_bol,name='html_bol')
     
 ]

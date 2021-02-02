@@ -520,8 +520,9 @@ def getScores(request):
     address = request.user.publicAddress
     creditScore = user.creditScore
 
-    web3, contract = web3Setup()
+    contract, web3 = web3Setup()
     walletBalance = getAccountBalance(web3, address)
+    
     return Response({'creditScore':creditScore, 'balance':walletBalance})
 
 @api_view(['post'])
@@ -558,13 +559,13 @@ def finalPayment(request):
     #set delivered
 
     return Response({"true":True})
+
 def _getCarrierInformation(shipmentId):
     contract, web3 = web3Setup()
     data=contract.functions.getCarrierInformation(shipmentId).call()
     return list(data)
 
-def html_bol(request):
-    shipmentId="r23A"
+def html_bol(request, shipmentId):
     getDate=_getDate(shipmentId)
     getBOL_No=_getBOL_No(shipmentId)
     getShipFrom=_getShipFrom(shipmentId)
