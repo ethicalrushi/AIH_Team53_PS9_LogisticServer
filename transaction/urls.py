@@ -14,9 +14,13 @@ urlpatterns = [
     path('setShipmentAgency/', views.setShipmentAgency),
 
     path('scanQRCode/<str:shipmentId>/', views.scanQRCode),
+    
+    path('getPendingOrdersReceiver/', views.getPendingOrdersReceiver),
+    path('getOrderDetails/<str:shipmentId>/', views.getOrderDetails),
     path('blockPayment/', views.blockReceiverPayment),
     path('getScores/', views.getScores),
     path('finalPayment/', views.finalPayment),
+    path('getRemainingCost/<str:shipmentId>/', views.getTotalCost),
 
     #############ShipmentAgencyAPI###############
     path('setCarrier/', views.setCarrier),

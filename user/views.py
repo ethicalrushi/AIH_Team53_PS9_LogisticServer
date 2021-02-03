@@ -27,3 +27,4 @@ def getUserDetails(request):
     user = request.user
     print(user)
     return Response({"name":user.name, "role":user.role})
+
