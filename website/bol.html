@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head></head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet"  href="{% static 'css/style.css' %}">
+    <body>
+        
+        <page size="A4">
+            <div class="row">
+               <p class=" ml-2 col-4">Date:{{getDate.Date}}</p>
+               <p class="heading ml-3 col-4 mr-3"><b>BILL OF LADING</b></p> 
+               <p class="pageNO ml-4 col-3">ShipmentId:{{shipmentId}}</p>
+            </div>
+    
+            <div class="row no-gutters">
+                <div class="col">
+                  <div class="card" id="card2">
+                    <p class="card-header d-flex align-items-center justify-content-center "id="shipfrom">SHIP FROM</p>
+                    <p class="card-text ml-2">
+                        Name:   {{getShipFrom.Name}} <br>
+                        Address:   {{getShipFrom.Address}}<br>
+                        City/State/Zip:   {{getShipFrom.City}},{{getShipFrom.State}},{{getShipFrom.Zip}}<br>
+                        SID#:  {{getShipFrom.Sid}}<br>
+                        FOB: {{getShipFrom.FOB}}
+                    </p>
+                  </div>
+                </div>
+                  <div class="col">
+                    <div class="card" id="card3">
+                      <p id="bol">Bill of lading number: {{getBOL_No.BOL_No}}</p>
+                    </div>
+                  </div>
+           </div>
+
+
+            <div class="row no-gutters">
+                <div class="col">
+                  <div class="card" id="card2">
+                    <p class="card-header d-flex align-items-center justify-content-center "id="shipfrom">SHIP TO</p>
+                    <p class="card-text ml-2 ">
+                        Location#: {{getshipTo.Location}}<br>
+                        Name: {{getshipTo.Name}}<br>
+                        Address:  {{getshipTo.Address}}<br>
+                        City/State/Zip:   {{getshipTo.City}},{{getshipTo.State}},{{getshipTo.Zip}}<br>
+                        FOB:  {{getshipTo.FOB}}
+                    </p>
+                    
+                  </div>
+                </div>
+                  <div class="col">
+                    <div class="card" id="card3">
+                      <p id="bol" class="card-text">CARRIER NAME: {{getCarrier.CarrierName}}<br>
+                          Trailer number:  {{getCarrier.TrailerNumber}}<br>
+                          Seal number(s):  {{getCarrier.SealNumber}}<br>
+                          SCAC: {{getCarrier.SCAD}}<br>
+                          Pro Number: {{getCarrier.ProNumber}}
+                      </p>
+                    </div>
+                  </div>
+            </div>
+            
+
+            <div class="row no-gutters">
+              <div class="col">
+                <div class="card" id="card4">
+                <p class="card-text ml-2">
+                     SPECIAL INSTRUCTIONS:<br>
+                     underlying Bill Of Lading Numbers:
+    
+                  </p>
+                </div>
+              </div>
+                <div class="col">
+                  <div class="card" id="card4">
+                    <p id="bol" class="card-text">Prepaid<br>Collect<br>Master Bill OF Lading</p>
+                  </div>
+                </div>
+               </div>
+
+          <div class="card d-flex align-items-center justify-content-center" id="tablehead1">CUSTOMER ORDER INFORMATION</div>
+            <table class="table table-bordered" id="table1">
+              <thead>
+                <tr>
+                  <th scope="col">CUSTOMER ORDER NUMBER</th>
+                  <th scope="col">CUST# PKGS</th>
+                  <th scope="col">WEIGHT</th>
+                  <th scope="col">PALLET</th>
+                  <th scope="col">ADDITIONAL SHIPPER INFO</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i,j in OrderInformation.items %}
+                <tr>
+                  <td>{{j.0}}</td>
+                  <td>{{j.1}}</td>
+                  <td>{{j.2}}</td>
+                  <td>{{j.3}}</td>
+                  <td>{{j.5}}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                  <th >GRAND TOTAL</th>
+                  <td>{{getGrandTotal.PKGS}}</td>
+                  <td>{{getGrandTotal.Weight}}</td>
+                  <td colspan="2" class="table-dark"></td>
+                  
+                </tr>
+              </tbody>
+              </table>
+
+              <div class="card d-flex align-items-center justify-content-center" id="tablehead2">CARRIER INFORMATION</div>
+              <table class="table table-bordered" id="table2">
+                <thead>
+                  <tr>
+  
+                    <th scope="colgroup" colspan="2">HANDLING UNIT</th>
+                    <th scope="colgroup" colspan="2">PACKAGE</th>
+                  
+                    <th scope="col" rowspan="2">WEIGHT</th>
+                    <th scope="col" rowspan="2">H.M(X)</th>
+                    <th scope="col" rowspan="2">Description</th>
+                    <th scope="colgroup" colspan="2">LTL ONLY</th>
+                     </tr>
+                     <tr>
+  
+                    <th scope="col">QTY</th>
+                    <th scope="col">TYPE</th>
+                    <th scope="col">QTY</th>
+                    <th scope="col">TYPE</th>
+            
+                    <th scope="col">NMFC#</th>
+                    <th scope="col">CLASS</th>
+              
+                     </tr>
+                </thead>
+                <tbody>
+                  {% for i,j in CarrierInformation.items %}
+                  <tr>
+                    <td>{{j.0}}</td>
+                    <td>{{j.1}}</td>
+                    <td>{{j.2}}</td>
+                    <td>{{j.3}}</td>
+                    <td>{{j.4}}</td>
+                    <td>{{j.5}}</td>
+                    <td>{{j.6}}</td>
+                    <td>{{j.7}}</td>
+                    <td>{{j.8}}</td>
+                  </tr>
+                  {% endfor %}
+                  <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{getGrandTotal.Weight}}</td>
+                    <td></td>
+                    <td>Grand Total</td>
+                    <td></td>
+                    <td class="table-dark"></td>
+                    
+                  </tr>
+                </tbody>
+                </table>
+        </page>
+      </body>
+</html>
+     

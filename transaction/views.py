@@ -17,10 +17,24 @@ import json
 from . import constants
 import datetime
 
-class ShipmentAgencyListView(generics.ListCreateAPIView):
+# class ShipmentAgencyListView(generics.ListCreateAPIView):
 
-    queryset = ShipmentAgency.objects.all()
-    serializer_class = ShipmentAgencySerializer
+#     queryset = ShipmentAgency.objects.all()
+#     serializer_class = ShipmentAgencySerializer
+
+@api_view(['get'])
+def getShipmentAgency(request):
+    shipmentAgencyList = ShipmentAgency.objects.all()
+    dataList = []
+    for shipmentAgency in shipmentAgencyList:
+        dic = {}
+        dic['name'] = shipmentAgency.name
+        dic['cost'] = shipmentAgency.cost
+        dic['pk'] = shipmentAgency.pk
+        dataList.append(dic)
+
+    response = {"data":dataList}
+    return Response(response)
 
 class ShipmentAgencyDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ShipmentAgency.objects.all()
@@ -68,7 +82,7 @@ def web3Setup():
     web3 = Web3(Web3.HTTPProvider(ganache_url))
     abi = json.loads(constants.abi)
     web3.eth.defaultAccount = web3.eth.accounts[0]
-    address = web3.toChecksumAddress('0x074EC44e6f1De63CD908e24240142371380A4572')
+    address = web3.toChecksumAddress(constants.contractAddress)
     contract = web3.eth.contract(address=address, abi=abi)
     return contract, web3
 
@@ -77,8 +91,9 @@ def getShipmentId(request):
     while True:
         randomString = ''.join(random.choices(string.ascii_uppercase +
                                 string.digits, k = 6))
-        users = User.objects.all()
-        user = users[0]
+        randomString+= ''.join(random.choices(
+                                string.digits, k = 8))
+        user = request.user
         try:
             shipmentOrder = ShipmentOrder.objects.get(shipmentId=randomString)
         except:
@@ -97,22 +112,25 @@ def getShipmentId(request):
 "zip":"421605"
 }
 """
+
 @api_view(['post'])
 def setShipFrom(request):
     date = datetime.datetime.now()
     date = date.strftime("%d %B %Y")
     shipmentId = request.data["shipmentId"]
-    bolNo = "".join(i for i in shipmentId if i>='0' and i<='9')
+    print(shipmentId)
+    bolNo = "".join(i for i in shipmentId if i in {str(j) for j in range(10)})
     
-    name = request.data["name"]
+    name = request.user.name
     # contact = request.data["contact"]
-    address = request.data["address"]
-    city = request.data["city"]
-    state = request.data["state"]
-    zipcode = request.data["zip"]
+    address = request.user.address
+    city = request.user.city
+    state = request.user.state
+    country = request.user.country
+    zipcode = request.user.zipcode
         
     contract, web3 = web3Setup()
-    userAddress = web3.toChecksumAddress('0xD1e684503F184464252A7759e817a6333B5F68a9')
+    userAddress = web3.toChecksumAddress('0x57402D6d32821EB898E20848FDcB91273f4774Bb')
 
     tx_hash = contract.functions.setDate(shipmentId,date).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
@@ -123,6 +141,33 @@ def setShipFrom(request):
     tx_hash = contract.functions.setShipFrom(shipmentId, name, address, city, state, int(zipcode), int(bolNo), False, 1, userAddress).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getDate(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getDate(shipmentId).call()
+    dic={}
+    dic['Date']=data
+    return dic
+
+def _getBOL_No(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getBOL_No(shipmentId).call()
+    dic={}
+    dic['BOL_No']=data
+    return dic
+
+def _getShipFrom(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getShipFrom(shipmentId).call()
+    dic={}
+    dic['Name']=data[0]
+    dic['Address']=data[1]
+    dic['City']=data[2]
+    dic['State']=data[3]
+    dic['Zip']=data[4]
+    dic['Sid']=data[5]
+    dic['FOB']=data[6]
+    return dic
 
 """
 {"shipmentId":"r23A",
@@ -136,21 +181,41 @@ def setShipFrom(request):
 @api_view(['post'])
 def setShipTo(request):
     shipmentId = request.data["shipmentId"]
-    name = request.data["name"]
-    # contact = request.data["contact"]
-    address = request.data["address"]
-    city = request.data["city"]
-    state = request.data["state"]
-    zipcode = request.data["zip"]
     
-    bolNo = "".join(i for i in shipmentId if i>='0' and i<='9')
+    contact = request.data["contact"]
+    user = User.objects.get(contact=contact)
+    name = user.name
+    address = user.address
+    city = user.city
+    state = user.state
+    country = user.country
+    zipcode = user.zipcode
+    
+    bolNo = "".join(i for i in shipmentId if i in {str(j) for j in range(10)})
+
+    shipmentOrder = ShipmentOrder.objects.get(shipmentId=shipmentId)
+    shipmentOrder.receiver = user
+    shipmentOrder.save()
 
     contract, web3 = web3Setup()
-    userAddress = web3.toChecksumAddress('0xD1e684503F184464252A7759e817a6333B5F68a9')
+    userAddress = web3.toChecksumAddress('0x57402D6d32821EB898E20848FDcB91273f4774Bb')
 
     tx_hash = contract.functions.setShipTo(shipmentId, name, address, city, state, int(zipcode), int(bolNo), False, 1, userAddress).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getShipTo(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getShipTo(shipmentId).call()
+    dic={}
+    dic['Name']=data[0]
+    dic['Address']=data[1]
+    dic['City']=data[2]
+    dic['State']=data[3]
+    dic['Zip']=data[4]
+    dic['Location']=data[5]
+    dic['FOB']=data[6]
+    return dic
 
 """
 {"shipmentId":"r23A",
@@ -169,12 +234,26 @@ def addCustomerOrder(request):
     weight = int(request.data["weight"])
     cost = int(request.data["cost"]) #to be added to contract
     remarks = request.data["remarks"]
+    # document = request.data["document"]
 
     contract, web3 = web3Setup()
 
-    tx_hash = contract.functions.setOrderInformation(shipmentId, customerOrderNumber, numberOfPackages, weight, 0, remarks ).transact()
+    tx_hash = contract.functions.setOrderInformation(shipmentId, customerOrderNumber, numberOfPackages, weight, 0, remarks, int(cost) ).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getCustomerOrder(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getOrderInformation(shipmentId).call()
+    return list(data)
+
+def _getGrandTotal(shipmentId):
+    contract,web3=web3Setup()
+    data=contract.functions.getGrandTotal(shipmentId).call()
+    dic={}
+    dic['Weight']=data[0]
+    dic['PKGS']=data[1]
+    return dic
 
 """
 {
@@ -184,6 +263,7 @@ def addCustomerOrder(request):
 """
 @api_view(['post'])
 def setShipmentAgency(request):
+    print(request.data)
     shipmentId = request.data["shipmentId"]
     shipmentAgencyId = int(request.data["shipmentAgencyId"])
 
@@ -201,23 +281,25 @@ def setShipmentAgency(request):
 def getShipmentOrdersShipper(request):
     contract, web3 = web3Setup()
 
-    user = User.objects.all()[0] #get from token
+    user = request.user 
     shipmentOrders = ShipmentOrder.objects.filter(shipper=user)
 
-    shipmentIds = ["r23A",]
-    # shipmentIds = [shipmentOrder.shipmentId for shipmentOrder in shipmentOrders]
+    # shipmentIds = ["r23A",]
+    shipmentIds = [shipmentOrder.shipmentId for shipmentOrder in shipmentOrders]
 
     dataList = []
     for shipmentId in shipmentIds:
         data = contract.functions.getOrderSnapshot(shipmentId).call()
         dic = {}
-        dic["shipFrom"]=data[0]
-        dic["shipTo"] = data[1]
+        dic["shipFromName"]=data[0]
+        dic["shipToName"] = data[1]
         dic["shipmentId"] = shipmentId
         dic["shipmentAgency"] = "RMT LTD" #get from db(shipmentorder) later
         dic["approved"] = data[2]
+        dic["shipToCity"] = "city"
         dataList.append(dic)
 
+    print(dataList)
     return Response(dataList, status=status.HTTP_200_OK)
 
 #######################ShipmentAgencyAPIs#######################
@@ -247,6 +329,17 @@ def setCarrier(request):
     tx_hash = contract.functions.setCarrier(shipmentId, carrierName, trailerNumber, sealNumber, scad, proNumber).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+def _getCarrier(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getCarrier(shipmentId).call()
+    dic={}
+    dic['CarrierName']=data[0]
+    dic['TrailerNumber']=data[1]
+    dic['SealNumber']=data[2]
+    dic['SCAD']=data[3]
+    dic['ProNumber']=data[4]
+    return dic
 
 """
 {
@@ -281,6 +374,277 @@ def setCarrierInformation(request):
     tx_hash = contract.functions.setCarrierInformation(shipmentId, handlingUnitQuantity, handlingUnitType, packageQuantity, packageType, weight, hm, description, nmfc, pClass).transact()
     web3.eth.waitForTransactionReceipt(tx_hash)
     return Response({"shipmentId":shipmentId})
+
+"""
+{
+    "shipmentId":"r23A",
+    "longitude":"23.311",
+    "latitude":"31.421",
+    "approved":"1",
+    "remarks":""
+}
+"""
+#can give an option to add documents and attach ipfs links
+@api_view(['post'])
+def setTrackingInformation(request):
+    shipmentId = request.data["shipmentId"]
+    date = datetime.datetime.now()
+    time = date.strftime("%H:%M:%S")
+    date = date.strftime("%d %B %Y")
+    longitude = request.data["longitude"]
+    latitude = request.data["latitude"]
+    user = User.objects.all()[0] #get from auth
+    reporterCompanyName = user.companyName
+    approved = bool(request.data["approved"])
+    remarks = request.data["remarks"]
+
+    contract, web3 = web3Setup()
+
+    tx_hash = contract.functions.setTrackingData(shipmentId, date, time, longitude, latitude, reporterCompanyName, approved, remarks).transact()
+    web3.eth.waitForTransactionReceipt(tx_hash)
+    return Response({"shipmentId":shipmentId})
+
+@api_view(['get'])
+def getTrackingInformation(request, shipmentId):
+    contract, web3 = web3Setup()
+
+    data = contract.functions.getTrackingData(shipmentId).call()
+
+    dataList = []
+    for d in data:
+        dic = {}
+        dic["date"] = d[0]
+        dic["time"] = d[1]
+        dic["longitude"] = d[2]
+        dic["latitude"] = d[3]
+        dic["companyName"] = d[4]
+        dic["approved"] = d[5]
+        dic["remark"] = d[6]
+        dataList.append(dic)
+    print(dataList)
+    return Response(dataList)
+
+@api_view(['get'])
+def scanQRCode(request, shipmentId):
+    contract, web3 = web3Setup()
+
+    user = request.user
+
+    shipmentOrder = ShipmentOrder.objects.get(shipmentId=shipmentId)
+
+    d = contract.functions.getScanDetails(shipmentId).call()
+
+    #get agency predictions here
+
+    dic = {}
+    dic["weight"] = d[0]
+    dic["packages"] = d[1]
+    dic["shipFromName"] = d[2]
+    dic["shipToName"] = d[3]
+    dic["shipToCity"] = d[4]
+    dic["shipmentId"] = shipmentId
+    dic["suggestions"] = ""
+    dic['receiver'] = False
+
+    if(shipmentOrder.receiver==user):
+        dic['receiver'] = True
+
+    return Response(dic)
+
+def getAccountBalance(web3, address):
+    balance = web3.eth.getBalance(address)
+    balance = web3.fromWei(balance, "ether")
+    return balance
+
+def paymentFunction(web3, private_key, price, account_1, flag, nonce):
+    account_2 = web3.eth.accounts[0] #server
+    if flag:
+        account_2 = account_1
+    
+    tx = {
+        'nonce': nonce,
+        'to': account_2,
+        'value': web3.toWei(price, "ether"),
+        'gas': 2000000,
+        'gasPrice': web3.toWei('50', 'gwei'),
+    }
+
+    signed_tx = web3.eth.account.signTransaction(tx, private_key)
+    tx_hash = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+@api_view(['post'])
+def blockReceiverPayment(request):
+    contract, web3 = web3Setup()
+
+    shipmentId =request.data["shipmentId"]
+    private_key = request.data["privateKey"]
+
+    d = contract.functions.getScanDetails(shipmentId).call()
+
+    totalCost = float(d[5])
+
+    #can get from token
+    user = request.user
+    userCredit = user.creditScore
+    #sender account
+    account_1 = user.publicAddress
+    userWalletBalance = float(getAccountBalance(web3, account_1))
+
+    print(totalCost, userWalletBalance, userCredit, userWalletBalance+userCredit)
+    if(totalCost<userWalletBalance+userCredit+2 and userCredit>1):
+        price = min(totalCost, max(userWalletBalance-1, 0))
+        creditUsed = totalCost-price
+        print(totalCost, price, creditUsed)
+        user.creditScore = userCredit-creditUsed
+        user.save()
+        print("saving credit", user.creditScore)
+
+        #sender key
+        #can get from request
+        # private_key = '2c59762c4ce23a0c7c304b8ed980db3bba1cbe0b032d14d00f539827b551a307'
+        nonce = web3.eth.getTransactionCount(account_1)
+        paymentFunction(web3, private_key, price, account_1, False, nonce)
+
+        tx = contract.functions.recievePayment(shipmentId, int(price)).transact()
+        web3.eth.waitForTransactionReceipt(tx)
+        return Response({"flag":True})
+
+    else:
+        #Insufficient balance
+        print("insufficeien")
+        return Response({"flag":False}, status=status.HTTP_403_FORBIDDEN)
+
+@api_view(['get'])
+def getScores(request):
+    user = request.user
+    address = request.user.publicAddress
+    creditScore = user.creditScore
+
+    contract, web3 = web3Setup()
+    walletBalance = getAccountBalance(web3, address)
+
+    return Response({'creditScore':creditScore, 'balance':walletBalance})
+
+@api_view(['post'])
+def finalPayment(request):
+    contract, web3 = web3Setup()
+    shipmentId =request.data["shipmentId"]
+    private_key = request.data["privateKey"]
+    private_key = '2c59762c4ce23a0c7c304b8ed980db3bba1cbe0b032d14d00f539827b551a307'
+
+    d = contract.functions.getScanDetails(shipmentId).call()
+    totalCost = d[5]
+
+    user = request.user
+    account_1  = user.publicAddress
+    nonce = web3.eth.getTransactionCount(account_1)
+
+    #pay credit
+    paymentFunction(web3, private_key, totalCost, account_1, False, nonce)
+
+    tx = contract.functions.recievePayment(shipmentId, int(totalCost)).transact()
+    web3.eth.waitForTransactionReceipt(tx)
+
+    shipmentOrder = ShipmentOrder.objects.get(shipmentId=shipmentId)
+    shipperAccount = shipmentOrder.shipper.publicAddress
+
+    data = contract.functions.getOrderSnapshot(shipmentId).call()
+    amount = data[3]
+
+    contractAccount = web3.eth.accounts[0] 
+    nonce = web3.eth.getTransactionCount(contractAccount)
+
+    #pay to shipper
+    paymentFunction(web3, "66af134979bb6c931badda475aa9ff073625cddadffaad9a3938981c11bbb4b9", amount, shipperAccount, True, nonce)
+
+    #set delivered
+
+    return Response({"flag":True})
+
+def _getCarrierInformation(shipmentId):
+    contract, web3 = web3Setup()
+    data=contract.functions.getCarrierInformation(shipmentId).call()
+    return list(data)
+
+def html_bol(request, shipmentId):
+    getDate=_getDate(shipmentId)
+    getBOL_No=_getBOL_No(shipmentId)
+    getShipFrom=_getShipFrom(shipmentId)
+    getShipTo=_getShipTo(shipmentId)
+    getOrderInformation=_getCustomerOrder(shipmentId)
+    getCarrier=_getCarrier(shipmentId)
+    getGrandTotal=_getGrandTotal(shipmentId)
+    getCarrierInformation=_getCarrierInformation(shipmentId)
+    orderinfo={}
+    for i,j in enumerate(getOrderInformation):
+        orderinfo[i]=j
+    carrierinfo={}
+    for i,j in enumerate(getCarrierInformation):
+        carrierinfo[i]=j
+    response={
+        'shipmentId':shipmentId,
+        'getDate':getDate,
+        'getShipFrom':getShipFrom,
+        'getBOL_No':getBOL_No,
+        'getshipTo':getShipTo,
+        'getCarrier':getCarrier,
+        'OrderInformation':orderinfo,
+        'getGrandTotal':getGrandTotal,
+        'CarrierInformation':carrierinfo
+    }
+    return render(request,'bol.html',response)
+
+
+@api_view(['get'])
+def getPendingOrdersReceiver(request):
+    contract, web3 = web3Setup()
+
+    user = request.user 
+    shipmentOrders = ShipmentOrder.objects.filter(receiver=user)
+
+    shipmentIds = [shipmentOrder.shipmentId for shipmentOrder in shipmentOrders]
+
+    dataList = []
+    for shipmentId in shipmentIds:
+        data = contract.functions.getOrderSnapshot(shipmentId).call()
+        if data[2] is False:
+            dic = {}
+            dic["shipFromName"]=data[0]
+            dic["shipToName"] = data[1]
+            dic["shipmentId"] = shipmentId
+            dic["shipmentAgency"] = "RMT LTD" #get from db(shipmentorder) later
+            dic["approved"] = data[2]
+            dic["shipToCity"] = "city"
+            dataList.append(dic)
+
+    print(dataList)
+    return Response(dataList, status=status.HTTP_200_OK)
+
+@api_view(['get'])
+def getOrderDetails(request, shipmentId):
+    data=_getCustomerOrder(shipmentId)
+    dataList = []
+    for d in data:
+        dic = {}
+        dic['orderNumber'] = d[0]
+        dic['numberOfPackages'] = d[1]
+        dic['weight'] = d[2]
+        dic['pallet'] = d[3]
+        dic['cost'] = d[4]
+        dic['remarks'] = d[5]
+        dic['shipmentId'] = shipmentId
+        dataList.append(dic)
+    return Response(dataList)
+
+@api_view(['get'])
+def getTotalCost(request, shipmentId):
+    contract, web3 = web3Setup()
+    data = contract.functions.getOrderSnapshot(shipmentId).call()
+    print(data)
+    cost= data[4]
+    return Response({"cost":cost})
+
 
 
 

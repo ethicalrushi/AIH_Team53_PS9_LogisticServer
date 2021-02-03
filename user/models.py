@@ -8,7 +8,9 @@ class User(AbstractUser):
     address=models.TextField()
     city=models.CharField(max_length=50)
     state=models.CharField(max_length=50)
+    country = models.CharField(max_length=200, null=True, blank=True)
     zipcode = models.CharField(max_length=6)
+    creditScore = models.FloatField(default=100000)
     
     CHOICES = (
         ('SHP', 'Shipper'),
